@@ -1,4 +1,5 @@
-﻿using BankApi.Models;
+﻿using BankApi.DTO;
+using BankApi.Models;
 
 namespace BankApi.Interfaces
 {
@@ -12,6 +13,6 @@ namespace BankApi.Interfaces
         Task<List<TransactionEvent>> GetByCustomer(
             string customerId);
 
-        Task<List<TransactionEvent>> SearchNotes(string searchTerm);
+        Task<List<TransactionSearchResult>> SearchNotes(string searchTerm);
     }
 }

@@ -1,6 +1,8 @@
-﻿using BankApi.Interfaces;
+﻿using BankApi.DTO;
+using BankApi.Interfaces;
 using BankApi.Models;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace BankApi.Implementation;
@@ -27,17 +29,41 @@ public class TransactionRepository
                 "Transactions");
     }
 
-    public async Task<List<TransactionEvent>> SearchNotes(string searchTerm)
+    public async Task<List<TransactionSearchResult>>SearchNotes(string searchTerm)
     {
         var filter =
             Builders<TransactionEvent>
                 .Filter
                 .Text(searchTerm);
 
-        return await _transactions
-            .Find(filter)
-            .SortByDescending(x => x.Timestamp)
-            .ToListAsync();
+        var projection =
+            Builders<TransactionEvent>
+                .Projection
+                .Include(x => x.TransactionId)
+                .Include(x => x.Note)
+                .MetaTextScore("score");
+
+        var results =
+            await _transactions
+                .Find(filter)
+                .Project<BsonDocument>(projection)
+                .Sort(new BsonDocument(
+                    "score",
+                    new BsonDocument("$meta", "textScore")))
+                .ToListAsync();
+
+        return results.Select(x =>
+            new TransactionSearchResult
+            {
+                TransactionId =
+                    x["TransactionId"].AsString,
+
+                Note =
+                    x["Note"].AsString,
+
+                Score =
+                    x["score"].AsDouble
+            }).ToList();
     }
 
     public async Task<List<TransactionEvent>> GetAll()
