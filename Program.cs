@@ -14,6 +14,9 @@ builder.Services.Configure<MongoSettings>(
 builder.Services.AddSingleton<
     ICustomerRepository,
     CustomerRepository>();
+builder.Services.AddScoped<
+    ITransactionRepository,
+    TransactionRepository>();
 
 var app = builder.Build();
 
