@@ -36,6 +36,28 @@ public class TransactionsController
                 .SearchNotes(term));
     }
 
+    [HttpGet("search-fuzzy")]
+    public async Task<IActionResult>
+    SearchFuzzy(
+        [FromQuery] string term)
+    {
+        return Ok(
+            await _repository
+                .SearchNotesFuzzy(term));
+    }
+
+
+    [HttpGet("search-regex")]
+    public async Task<IActionResult>
+    SearchRegex(
+        [FromQuery] string term)
+    {
+        return Ok(
+            await _repository
+                .SearchNotesRegex(term));
+    }
+
+
     [HttpGet("{transactionId}")]
     public async Task<IActionResult>
         GetByTransactionId(

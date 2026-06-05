@@ -14,5 +14,7 @@ namespace BankApi.Interfaces
             string customerId);
 
         Task<List<TransactionSearchResult>> SearchNotes(string searchTerm);
+        Task<List<TransactionEvent>>SearchNotesFuzzy(string searchTerm);
+        Task<List<TransactionEvent>>SearchNotesRegex(string searchTerm);
     }
 }

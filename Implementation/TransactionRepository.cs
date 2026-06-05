@@ -66,6 +66,57 @@ public class TransactionRepository
             }).ToList();
     }
 
+    public async Task<List<TransactionEvent>>SearchNotesFuzzy(string searchTerm)
+    {
+        var pipeline = new[]
+        {
+        new BsonDocument("$search",
+            new BsonDocument
+            {
+                {
+                    "index",
+                    "default"
+                },
+                {
+                    "text",
+                    new BsonDocument
+                    {
+                        { "query", searchTerm },
+                        { "path", "Note" },
+                        {
+                            "fuzzy",
+                            new BsonDocument
+                            {
+                                { "maxEdits", 2 }
+                            }
+                        }
+                    }
+                }
+            })
+    };
+
+        return await _transactions
+            .Aggregate<TransactionEvent>(pipeline)
+            .ToListAsync();
+    }
+
+    public async Task<List<TransactionEvent>>
+    SearchNotesRegex(string searchTerm)
+    {
+        var filter =
+            Builders<TransactionEvent>
+                .Filter
+                .Regex(
+                    x => x.Note,
+                    new BsonRegularExpression(
+                        searchTerm,
+                        "i"));
+
+        return await _transactions
+            .Find(filter)
+            .SortByDescending(x => x.Timestamp)
+            .ToListAsync();
+    }
     public async Task<List<TransactionEvent>> GetAll()
     {
         return await _transactions
