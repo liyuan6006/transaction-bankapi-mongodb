@@ -29,7 +29,7 @@ public class TransactionRepository
                 "Transactions");
     }
 
-    public async Task<List<TransactionSearchResult>>SearchNotes(string searchTerm)
+    public async Task<List<TransactionSearchResult>> SearchNotes(string searchTerm)
     {
         var filter =
             Builders<TransactionEvent>
@@ -66,7 +66,7 @@ public class TransactionRepository
             }).ToList();
     }
 
-    public async Task<List<TransactionEvent>>SearchNotesFuzzy(string searchTerm)
+    public async Task<List<TransactionEvent>> SearchNotesFuzzy(string searchTerm)
     {
         var pipeline = new[]
         {
@@ -136,9 +136,7 @@ public class TransactionRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<TransactionEvent>>
-        GetByCustomer(
-            string customerId)
+    public async Task<List<TransactionEvent>> GetByCustomer(string customerId)
     {
         return await _transactions
             .Find(x =>
@@ -148,4 +146,42 @@ public class TransactionRepository
                 x.Timestamp)
             .ToListAsync();
     }
+
+
+    public async Task<List<CustomerSpending>> GetTopCustomers()
+    {
+        var pipeline = new[]
+        {
+        new BsonDocument("$group",
+            new BsonDocument
+            {
+                { "_id", "$CustomerId" },
+                {
+                    "TotalSpent",
+                    new BsonDocument("$sum", "$Amount")
+                }
+            }),
+
+        new BsonDocument("$sort",
+            new BsonDocument("TotalSpent", -1)),
+
+        new BsonDocument("$limit", 2)
+    };
+
+        var results = await _transactions
+            .Aggregate<BsonDocument>(pipeline)
+            .ToListAsync();
+
+        return results
+            .Select(x => new CustomerSpending
+            {
+                CustomerId =
+                    x["_id"].AsString,
+
+                TotalSpent =
+                    (decimal)x["TotalSpent"].ToDouble()
+            })
+            .ToList();
+    }
+
 }

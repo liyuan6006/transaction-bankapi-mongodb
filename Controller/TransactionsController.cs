@@ -1,4 +1,5 @@
-﻿using BankApi.Interfaces;
+﻿using BankApi.Implementation;
+using BankApi.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankApi.Controllers;
@@ -85,5 +86,14 @@ public class TransactionsController
             await _repository
                 .GetByCustomer(
                     customerId));
+    }
+
+
+    [HttpGet("top-customers")]
+    public async Task<IActionResult>GetTopCustomers()
+    {
+        var customers =await _repository.GetTopCustomers();
+
+        return Ok(customers);
     }
 }
