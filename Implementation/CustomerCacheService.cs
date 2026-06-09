@@ -1,9 +1,10 @@
 ﻿using BankApi.Interfaces;
 using BankApi.Models;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using StackExchange.Redis;
+using System.Collections.Generic;
 using System.Text.Json;
-using Microsoft.Extensions.Options;
 
 namespace BankApi.Implementation
 {
@@ -38,6 +39,26 @@ namespace BankApi.Implementation
         }
         public async Task<Customer?> GetCustomer(string customerId)
         {
+            var rateKey =
+                   $"rate:{customerId}";
+
+            var count =
+                await _redis.StringIncrementAsync(
+                    rateKey);
+
+            if (count == 1)
+            {
+                await _redis.KeyExpireAsync(
+                    rateKey,
+                    TimeSpan.FromMinutes(1));
+            }
+
+            if (count > 5)
+            {
+                throw new Exception(
+                    "Rate limit exceeded");
+            }
+
             var cacheKey =
                 $"customer:{customerId}";
 
@@ -127,5 +148,7 @@ namespace BankApi.Implementation
                         .Value == "1"
             };
         }
+
+
     }
 }

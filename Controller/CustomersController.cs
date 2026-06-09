@@ -20,7 +20,7 @@ namespace BankApi.Controller
 
 
         [HttpGet("{customerId}")]
-        public async Task<IActionResult> Get(string customerId)
+        public async Task<IActionResult> GetCustomer(string customerId)
         {
             var sw = Stopwatch.StartNew();
             var customer =
