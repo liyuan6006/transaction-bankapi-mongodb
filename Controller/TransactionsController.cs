@@ -90,9 +90,9 @@ public class TransactionsController
 
 
     [HttpGet("top-customers")]
-    public async Task<IActionResult>GetTopCustomers()
+    public async Task<IActionResult> GetTopCustomers()
     {
-        var customers =await _repository.GetTopCustomers();
+        var customers = await _repository.GetTopCustomers();
 
         return Ok(customers);
     }

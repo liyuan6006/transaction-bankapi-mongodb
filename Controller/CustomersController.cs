@@ -1,4 +1,5 @@
-﻿using BankApi.Interfaces;
+﻿using BankApi.Implementation;
+using BankApi.Interfaces;
 using BankApi.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +10,25 @@ namespace BankApi.Controller
     public class CustomersController : ControllerBase
     {
         private readonly ICustomerRepository _repository;
-
-        public CustomersController(ICustomerRepository repository)
+        private readonly ICustomerCacheService _service;
+        public CustomersController(ICustomerRepository repository, ICustomerCacheService service)
         {
             _repository = repository;
+            _service = service;
+        }
+
+
+        [HttpGet("{customerId}")]
+        public async Task<IActionResult> Get(string customerId)
+        {
+            var customer =
+                await _service.GetCustomer(
+                    customerId);
+
+            if (customer == null)
+                return NotFound();
+
+            return Ok(customer);
         }
 
         [HttpGet]
