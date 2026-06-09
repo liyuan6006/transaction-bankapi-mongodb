@@ -31,7 +31,11 @@ namespace BankApi.Implementation
                     "Customers");
         }
 
-
+        public async Task RemoveCustomerCache(string customerId)
+        {
+            await _redis.KeyDeleteAsync(
+                $"customer:{customerId}");
+        }
         public async Task<Customer?> GetCustomer(string customerId)
         {
             var cacheKey =

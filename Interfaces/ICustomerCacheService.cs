@@ -6,5 +6,7 @@ namespace BankApi.Interfaces
     {
         Task<Customer?> GetCustomer(
            string customerId);
+        Task RemoveCustomerCache(
+    string customerId);
     }
 }

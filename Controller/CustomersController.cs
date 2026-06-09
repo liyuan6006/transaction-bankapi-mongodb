@@ -2,6 +2,7 @@
 using BankApi.Interfaces;
 using BankApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace BankApi.Controller
 {
@@ -21,10 +22,14 @@ namespace BankApi.Controller
         [HttpGet("{customerId}")]
         public async Task<IActionResult> Get(string customerId)
         {
+            var sw = Stopwatch.StartNew();
             var customer =
                 await _service.GetCustomer(
                     customerId);
+            sw.Stop();
 
+            Console.WriteLine(
+                $"Elapsed = {sw.ElapsedMilliseconds} ms");
             if (customer == null)
                 return NotFound();
 
@@ -60,6 +65,26 @@ namespace BankApi.Controller
             await _repository.Create(customer);
 
             return Ok();
+        }
+
+
+        [HttpPut("{customerId}")]
+        public async Task<IActionResult> Update(string customerId,Customer customer)
+        {
+            if (customerId != customer.Id)
+            {
+                return BadRequest(
+                    "CustomerId mismatch");
+            }
+
+            await _repository.Update(
+                customer);
+
+            await _service.RemoveCustomerCache(
+                customerId);
+
+            return Ok(
+                "Customer updated and cache cleared");
         }
     }
 }
