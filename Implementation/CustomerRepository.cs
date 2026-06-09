@@ -9,16 +9,6 @@ namespace BankApi.Implementation
     {
         private readonly IMongoCollection<Customer> _customers;
 
-        //public CustomerRepository(IOptions<MongoSettings> settings)
-        //{
-        //    var client = new MongoClient(settings.Value.ConnectionString);
-
-        //    var database = client.GetDatabase(settings.Value.DatabaseName);
-
-        //    _customers = database.GetCollection<Customer>("Customers");
-        //    CreateIndexes();
-        //}
-
         public CustomerRepository(IMongoDatabase database)
         {
             _customers =
@@ -37,6 +27,19 @@ namespace BankApi.Implementation
 
             _customers.Indexes.CreateOne(emailIndex);
         }
+
+
+        public bool CanWithdraw( Customer customer, decimal amount)
+        {
+            if (amount <= 0)
+                return false;
+
+            if (customer.Balance < amount)
+                return false;
+
+            return true;
+        }
+
 
         public async Task<Customer?> GetByEmail(string email)
         {
