@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BankApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]/[action]")]
 public class TransactionsController
     : ControllerBase
 {
@@ -19,8 +19,7 @@ public class TransactionsController
     }
 
     [HttpGet]
-    public async Task<IActionResult>
-        GetAll()
+    public async Task<IActionResult>GetAll()
     {
         return Ok(
             await _repository.GetAll());

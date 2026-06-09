@@ -9,13 +9,22 @@ namespace BankApi.Implementation
     {
         private readonly IMongoCollection<Customer> _customers;
 
-        public CustomerRepository(IOptions<MongoSettings> settings)
+        //public CustomerRepository(IOptions<MongoSettings> settings)
+        //{
+        //    var client = new MongoClient(settings.Value.ConnectionString);
+
+        //    var database = client.GetDatabase(settings.Value.DatabaseName);
+
+        //    _customers = database.GetCollection<Customer>("Customers");
+        //    CreateIndexes();
+        //}
+
+        public CustomerRepository(IMongoDatabase database)
         {
-            var client = new MongoClient(settings.Value.ConnectionString);
+            _customers =
+                database.GetCollection<Customer>(
+                    "Customers");
 
-            var database = client.GetDatabase(settings.Value.DatabaseName);
-
-            _customers = database.GetCollection<Customer>("Customers");
             CreateIndexes();
         }
 

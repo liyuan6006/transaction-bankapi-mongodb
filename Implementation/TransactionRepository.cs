@@ -10,20 +10,27 @@ namespace BankApi.Implementation;
 public class TransactionRepository
     : ITransactionRepository
 {
-    private readonly IMongoCollection<TransactionEvent>
-        _transactions;
+    private readonly IMongoCollection<TransactionEvent>_transactions;
+
+    //public TransactionRepository(
+    //    IOptions<MongoSettings> settings)
+    //{
+    //    var client =
+    //        new MongoClient(
+    //            settings.Value.ConnectionString);
+
+    //    var database =
+    //        client.GetDatabase(
+    //            settings.Value.DatabaseName);
+
+    //    _transactions =
+    //        database.GetCollection<TransactionEvent>(
+    //            "Transactions");
+    //}
 
     public TransactionRepository(
-        IOptions<MongoSettings> settings)
+       IMongoDatabase database)
     {
-        var client =
-            new MongoClient(
-                settings.Value.ConnectionString);
-
-        var database =
-            client.GetDatabase(
-                settings.Value.DatabaseName);
-
         _transactions =
             database.GetCollection<TransactionEvent>(
                 "Transactions");
