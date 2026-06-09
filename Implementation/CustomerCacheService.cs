@@ -76,5 +76,56 @@ namespace BankApi.Implementation
 
             return customer;
         }
+
+
+        public async Task SaveFeatures(string customerId,CustomerFeatures features)
+        {
+            await _redis.HashSetAsync(
+                $"customer:{customerId}:features",
+                new HashEntry[]
+                {
+                    new("avg_7d",
+                        features.Avg7Day.ToString()),
+
+                    new("txn_count_24h",
+                        features.TransactionCount24h),
+
+                    new("device_changed",
+                        features.DeviceChanged ? 1 : 0)
+                });
+        }
+
+        public async Task<CustomerFeatures?> GetFeatures(string customerId)
+        {
+            var values =
+                await _redis.HashGetAllAsync(
+                    $"customer:{customerId}:features");
+
+            if (values.Length == 0)
+                return null;
+
+            return new CustomerFeatures
+            {
+                Avg7Day =
+                    decimal.Parse(
+                        values.First(
+                            x => x.Name ==
+                                 "avg_7d")
+                        .Value),
+
+                TransactionCount24h =
+                    int.Parse(
+                        values.First(
+                            x => x.Name ==
+                                 "txn_count_24h")
+                        .Value),
+
+                DeviceChanged =
+                    values.First(
+                        x => x.Name ==
+                             "device_changed")
+                        .Value == "1"
+            };
+        }
     }
 }

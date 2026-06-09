@@ -7,7 +7,7 @@ using System.Diagnostics;
 namespace BankApi.Controller
 {
     [ApiController]
-    [Route("api/customers")]
+    [Route("api/[controller]/[action]")]
     public class CustomersController : ControllerBase
     {
         private readonly ICustomerRepository _repository;
@@ -85,6 +85,31 @@ namespace BankApi.Controller
 
             return Ok(
                 "Customer updated and cache cleared");
+        }
+
+
+
+        [HttpPost("{customerId}")]
+        public async Task<IActionResult>SaveFeatures(string customerId,CustomerFeatures features)
+        {
+            await _service.SaveFeatures(
+                customerId,
+                features);
+
+            return Ok();
+        }
+
+        [HttpGet("{customerId}")]
+        public async Task<IActionResult>GetFeatures(string customerId)
+        {
+            var features =
+                await _service.GetFeatures(
+                    customerId);
+
+            if (features == null)
+                return NotFound();
+
+            return Ok(features);
         }
     }
 }
