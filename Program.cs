@@ -39,6 +39,20 @@ builder.Services.AddScoped<ICustomerRepository,CustomerRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ICustomerCacheService,CustomerCacheService>();
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "React",
+        policy =>
+        {
+            policy
+                .AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -48,6 +62,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("React");
 app.MapControllers();
 
 app.Run();

@@ -5,10 +5,25 @@ namespace BankApi.Interfaces
 {
     public interface ITransactionRepository
     {
-        Task<List<TransactionEvent>> GetAll();
 
-        Task<TransactionEvent?> GetByTransactionId(
-            string transactionId);
+        Task<List<TransactionEvent>> GetAll();
+        Task<List<TransactionEvent>> Search(TransactionSearchRequest request);
+        Task<List<AutocompleteResult>>SearchAutocomplete(string term);
+
+
+
+
+
+
+
+        Task<List<TransactionEvent>> GetTransactions_traditional_pagination(int pageNumber,int pageSize);
+        Task<TransactionEvent?> GetById(string id);
+        Task Create(TransactionEvent transaction);
+
+        Task Update(TransactionEvent transaction);
+
+        Task Delete( string id);
+        Task<TransactionEvent?> GetByTransactionId(string transactionId);
 
         Task<List<TransactionEvent>> GetByCustomer(
             string customerId);

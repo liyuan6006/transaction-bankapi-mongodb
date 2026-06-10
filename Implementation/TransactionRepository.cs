@@ -11,23 +11,6 @@ public class TransactionRepository
     : ITransactionRepository
 {
     private readonly IMongoCollection<TransactionEvent>_transactions;
-
-    //public TransactionRepository(
-    //    IOptions<MongoSettings> settings)
-    //{
-    //    var client =
-    //        new MongoClient(
-    //            settings.Value.ConnectionString);
-
-    //    var database =
-    //        client.GetDatabase(
-    //            settings.Value.DatabaseName);
-
-    //    _transactions =
-    //        database.GetCollection<TransactionEvent>(
-    //            "Transactions");
-    //}
-
     public TransactionRepository(
        IMongoDatabase database)
     {
@@ -35,6 +18,272 @@ public class TransactionRepository
             database.GetCollection<TransactionEvent>(
                 "Transactions");
     }
+
+    public async Task<List<TransactionEvent>> GetAll()
+    {
+        return await _transactions
+            .Find(_ => true)
+            .SortByDescending(x => x.Timestamp)
+            .ToListAsync();
+    }
+
+
+    public async Task<List<TransactionEvent>>
+       Search(
+           TransactionSearchRequest request)
+    {
+        var filter =
+            Builders<TransactionEvent>
+                .Filter.Empty;
+
+        if (!string.IsNullOrWhiteSpace(
+            request.CustomerId))
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Eq(
+                        x => x.CustomerId,
+                        request.CustomerId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+            request.AccountId))
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Eq(
+                        x => x.AccountId,
+                        request.AccountId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+            request.Merchant))
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Eq(
+                        x => x.Merchant,
+                        request.Merchant);
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+            request.MerchantCategory))
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Eq(
+                        x => x.MerchantCategory,
+                        request.MerchantCategory);
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+            request.City))
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Eq(
+                        x => x.City,
+                        request.City);
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+            request.State))
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Eq(
+                        x => x.State,
+                        request.State);
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+            request.Channel))
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Eq(
+                        x => x.Channel,
+                        request.Channel);
+        }
+
+        if (request.MinAmount.HasValue)
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Gte(
+                        x => x.Amount,
+                        request.MinAmount.Value);
+        }
+
+        if (request.MaxAmount.HasValue)
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Lte(
+                        x => x.Amount,
+                        request.MaxAmount.Value);
+        }
+
+        if (request.FromDate.HasValue)
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Gte(
+                        x => x.Timestamp,
+                        request.FromDate.Value);
+        }
+
+        if (request.ToDate.HasValue)
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Lte(
+                        x => x.Timestamp,
+                        request.ToDate.Value);
+        }
+        if (!string.IsNullOrWhiteSpace(
+        request.Note))
+        {
+            filter &=
+                Builders<TransactionEvent>
+                    .Filter.Text(
+                        request.Note);
+        }
+
+        return await _transactions
+            .Find(filter)
+            .SortByDescending(
+                x => x.Timestamp)
+            .Skip(
+                (request.PageNumber - 1)
+                * request.PageSize)
+            .Limit(
+                request.PageSize)
+            .ToListAsync();
+    }
+
+
+
+    public async Task<List<AutocompleteResult>>SearchAutocomplete(string term)
+    {
+        var pipeline = new[]
+        {
+        new BsonDocument(
+            "$search",
+            new BsonDocument
+            {
+                { "index", "autocomplete" },
+                {
+                    "compound",
+                    new BsonDocument
+                    {
+                        {
+                            "should",
+                            new BsonArray
+                            {
+                                new BsonDocument(
+                                    "autocomplete",
+                                    new BsonDocument
+                                    {
+                                        { "query", term },
+                                        { "path", "CustomerId" }
+                                    }),
+
+                                new BsonDocument(
+                                    "autocomplete",
+                                    new BsonDocument
+                                    {
+                                        { "query", term },
+                                        { "path", "Merchant" }
+                                    }),
+
+                                new BsonDocument(
+                                    "autocomplete",
+                                    new BsonDocument
+                                    {
+                                        { "query", term },
+                                        { "path", "MerchantCategory" }
+                                    })
+
+
+                            }
+                        },
+                        { "minimumShouldMatch", 1 }
+                    }
+                }
+            }),
+
+        new BsonDocument("$limit", 20)
+    };
+
+        var transactions =
+            await _transactions
+                .Aggregate<TransactionEvent>(
+                    pipeline)
+                .ToListAsync();
+
+        var results =
+            new List<AutocompleteResult>();
+
+        foreach (var transaction in transactions)
+        {
+            if (!string.IsNullOrWhiteSpace(
+                  transaction.CustomerId) &&
+              transaction.CustomerId.Contains(
+                  term,
+                  StringComparison.OrdinalIgnoreCase))
+            {
+                results.Add(
+                    new AutocompleteResult
+                    {
+                        Value =
+                            transaction.CustomerId,
+                        Field =
+                            "CustomerId"
+                    });
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    transaction.Merchant) &&
+                transaction.Merchant.Contains(
+                    term,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                results.Add(
+                    new AutocompleteResult
+                    {
+                        Value =
+                            transaction.Merchant,
+                        Field =
+                            "Merchant"
+                    });
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    transaction.MerchantCategory) &&
+                transaction.MerchantCategory.Contains(
+                    term,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                results.Add(
+                    new AutocompleteResult
+                    {
+                        Value =
+                            transaction.MerchantCategory,
+                        Field =
+                            "MerchantCategory"
+                    });
+            }
+        }
+
+        return results
+            .DistinctBy(x => x.Value)
+            .Take(20)
+            .ToList();
+    }
+
+
+
 
     public async Task<List<TransactionSearchResult>> SearchNotes(string searchTerm)
     {
@@ -124,13 +373,21 @@ public class TransactionRepository
             .SortByDescending(x => x.Timestamp)
             .ToListAsync();
     }
-    public async Task<List<TransactionEvent>> GetAll()
+
+
+
+    public async Task<List<TransactionEvent>>GetTransactions_traditional_pagination(
+        int pageNumber,
+        int pageSize)
     {
         return await _transactions
             .Find(_ => true)
             .SortByDescending(x => x.Timestamp)
+            .Skip((pageNumber - 1) * pageSize)
+            .Limit(pageSize)
             .ToListAsync();
     }
+
 
     public async Task<TransactionEvent?>
         GetByTransactionId(
@@ -189,6 +446,40 @@ public class TransactionRepository
                     (decimal)x["TotalSpent"].ToDouble()
             })
             .ToList();
+    }
+
+    public async Task Create(
+    TransactionEvent transaction)
+    {
+        await _transactions
+            .InsertOneAsync(
+                transaction);
+    }
+
+    public async Task<TransactionEvent?>
+    GetById(string id)
+    {
+        return await _transactions
+            .Find(x =>
+                x.Id == id)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task Update(
+    TransactionEvent transaction)
+    {
+        await _transactions
+            .ReplaceOneAsync(
+                x => x.Id == transaction.Id,
+                transaction);
+    }
+
+    public async Task Delete(
+    string id)
+    {
+        await _transactions
+            .DeleteOneAsync(
+                x => x.Id == id);
     }
 
 }
